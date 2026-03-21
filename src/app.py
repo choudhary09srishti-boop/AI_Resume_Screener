@@ -45,6 +45,10 @@ if st.button("🚀 Screen Resumes", use_container_width=True):
 
         # --- Results Table ---
         st.subheader("📊 Results")
+        verdict_filter = st.selectbox(
+    "Filter by Verdict",
+    ["All", "Strong Fit", "Moderate Fit", "Not Fit"]
+    )
         df = pd.DataFrame([{
             "Candidate": r["name"],
             "Score": r["score"],
@@ -55,7 +59,8 @@ if st.button("🚀 Screen Resumes", use_container_width=True):
         } for r in results])
 
         df = df.sort_values("Score", ascending=False).reset_index(drop=True)
-
+        if verdict_filter != "All":
+         df = df[df["Verdict"] == verdict_filter]
         def color_verdict(val):
             if val == "Strong Fit":
                 return "background-color: #d4edda; color: #155724"
@@ -65,6 +70,36 @@ if st.button("🚀 Screen Resumes", use_container_width=True):
                 return "background-color: #f8d7da; color: #721c24"
 
         st.dataframe(df.style.map(color_verdict, subset=["Verdict"]), use_container_width=True)
+
+        # --- Bar Chart ---
+        # --- Bar Chart ---
+        st.subheader("📊 Candidate Score Chart")
+        import plotly.express as px
+
+        def get_color(score):
+            if score >= 70:
+                return "#28a745"  # green
+            elif score >= 40:
+                return "#ffc107"  # yellow
+            else:
+                return "#dc3545"  # red
+
+        df["Color"] = df["Score"].apply(get_color)
+
+        fig = px.bar(
+            df,
+            x="Candidate",
+            y="Score",
+            color="Verdict",
+            color_discrete_map={
+                "Strong Fit": "#28a745",
+                "Moderate Fit": "#ffc107",
+                "Not Fit": "#dc3545"
+            },
+            text="Score"
+        )
+        fig.update_layout(showlegend=True)
+        st.plotly_chart(fig, use_container_width=True)
 
         # --- Export ---
         csv = df.to_csv(index=False)
